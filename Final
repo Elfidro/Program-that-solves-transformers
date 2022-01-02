@@ -1,0 +1,258 @@
+/*
+PROGRAMMED IN C++
+Programmer: Luigi Cortez      Date : 4/6/2021
+*/
+
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+#include <complex.h>
+#include <complex>
+
+using namespace std;
+
+void rectangular(float x, float y, float & mag, float & ang);
+void polardeg(float x, float y, float & rdeg, float & thetadeg);
+
+int main(void)
+{
+	int option;
+	char discard;
+	float primary, secondary;
+	float rdeg, thetadeg;
+	
+	/* variable for option 1 */
+	float R1, R2, X1, X2;
+	float RatedLoad;
+	float Pout, Pin;
+	float temp;
+	
+	/* variables for option 2 */
+	float Voc, Ioc, Poc, Vsc, Isc, Psc, thetha;
+	float Rc, Xm, Req, Xeq, Zeq;
+	float Piron, Pcu;
+	float KVA;
+	float mag, ang, pf, Reg, Eff;
+	float S;
+	complex <double> I1, I2, V1prime, Z, Z1, Z2, V2, E2, E1, N1overN2, N2overN1, PrimaryV, tempc;
+	I2 = complex<double>(0, 0);
+	V1prime = complex<double>(0, 0);
+	
+	while (true) {
+		
+		cout << "This program is designed to solve a transformer problem." << endl;
+		cout << "Please choose between the two different options (type '1' or '2')" << endl;
+		cout << "Option 1: Given transformer parameters values." << endl;
+		cout << "Option 2: Given the open circuit and short circuit test values." << endl;
+	
+		cin >> option;
+		
+		if (option == 1){
+			cout << "What is the KVA of the transformer:" << endl;
+			cin >> KVA;
+			cout << "What is the primary to secondary ratio (e.g. 2300/230):" << endl;
+			cin >> primary >> discard >> secondary;
+			cout << "What is R1 of the transformer:" << endl;
+			cin >> R1;
+			cout << "What is R2 of the transformer:" << endl;
+			cin >> R2;
+			cout << "What is Rc of the transformer:" << endl;
+			cin >> Rc;
+			cout << "What is Xm of the transformer:" << endl;
+			cin >> Xm;
+			cout << "What is X1 of the transformer:" << endl;
+			cin >> X1;
+			cout << "What is X2 of the transformer:" << endl;
+			cin >> X2;
+			cout << "What is the Rated Load of the transformer (e.g 75%):" << endl;
+			cin >> RatedLoad >> discard;
+			RatedLoad = float(RatedLoad) / 100;
+			cout << "At 0.866 power factor leading." << endl << endl;
+			
+			/*****************************************/
+			
+			V2 = complex<double> (secondary, 0);
+			I2 = complex<double> (((float(KVA*1000*RatedLoad)/float(secondary))), (acos(0.866)*float(180/3.14159)));
+			rectangular(real(I2), imag(I2), mag, ang);
+			tempc = complex<double> (mag, ang);
+			Z2 = complex<double> (R2, X2);
+			//tempc * Z2
+			tempc = complex<double> ((real(tempc)*real(Z2))-(imag(tempc)*imag(Z2)), (real(tempc)*imag(Z2))+(imag(tempc)*real(Z2)));
+			E2 = V2 + tempc;
+			polardeg(real(E2), imag(E2), rdeg, thetadeg);
+			E2 = complex<double> (rdeg, thetadeg);
+			N1overN2 = complex<double> (float(primary)/float(secondary), 0);
+			E1 = complex<double> ((real(E2)*real(N1overN2)), (imag(E2)));
+			N2overN1 = complex<double> (float(secondary)/float(primary), 0);
+			I1 = complex<double> ((real(I2)*real(N2overN1)), (imag(I2)));
+			//tempc * Z1
+			rectangular(real(I1), imag(I1), mag, ang);
+			tempc = complex<double> (mag, ang);
+			Z1 = complex<double> (R1, X1);
+			tempc = complex<double> ((real(tempc)*real(Z1))-(imag(tempc)*imag(Z1)), (real(tempc)*imag(Z1))+(imag(tempc)*real(Z1)));
+			rectangular(real(E1), imag(E1), mag, ang);
+			E1 = complex<double>(mag, ang);
+			PrimaryV = tempc + E1;
+			polardeg(real(PrimaryV), imag(PrimaryV), rdeg, thetadeg);
+			PrimaryV = complex<double> (rdeg, thetadeg);
+			
+			cout << "Primary voltage: " << abs(PrimaryV) << "|_" << imag(PrimaryV) << "V" << endl << endl;
+			
+			/*****************************************/
+			
+			cout << "Load current: " << real(I2) << "|_" << imag(I2) << endl << endl;
+			
+			/*****************************************/
+			
+			cout << "Primary current: " << real(I1) << "|_" << imag(I2) << "A" << endl << endl;
+			
+			/*****************************************/
+			
+			ang = (0 - (acos(0.866)*float(180/3.14159)));
+			Pout = real(V2) * real(I2) * cos(ang*float(3.14159/180));
+			ang = (imag(PrimaryV) - (acos(0.866)*float(180/3.14159)));
+			Pin = real(PrimaryV) * real(I1) * cos(ang*float(3.14159/180));
+			Eff = float(Pout/Pin) * 100;
+			
+			cout << "Efficiency of transformer: " << Eff << "%" << endl << endl;
+			
+			/*****************************************/
+			
+			Reg = ((real(PrimaryV)-primary)/primary) * 100;
+			
+			cout << "Voltage regulation at rated voltage:" << Reg << "%" << endl << endl;
+			
+			
+			
+		}
+		if (option == 2){
+			cout << "What is the KVA of the transformer:" << endl;
+			cin >> KVA;
+			cout << "What is the primary to secondary ratio (e.g. 2300/230):" << endl;
+			cin >> primary >> discard >> secondary;
+			cout << "For the open circuit test what is the Voc (V) : " << endl;
+			cin >> Voc;
+			cout << "For the open circuit test what is the Ioc (A) : " << endl;
+			cin >> Ioc;
+			cout << "For the open circuit test what is the Poc (W) : " << endl;
+			cin >> Poc;
+			cout << "For the short circuit test what is the Vsc (V): " << endl;
+			cin >> Vsc;
+			cout << "For the short circuit test what is the Isc (A): " << endl;
+			cin >> Isc;
+			cout << "For the short circuit test what is the Psc (W): " << endl;
+			cin >> Psc;
+			
+			/*****************************************/
+			
+			//Open circuit calculations
+			thetha = acos((Poc)/(Voc*Ioc));
+			Rc = (Voc)/(Ioc*cos(thetha));
+			Xm = (Voc)/(Ioc*sin(thetha));
+			Piron = Poc*pow((primary)/(Voc), 2);
+			Pcu = Psc*pow((((KVA*1000)/(primary))/float(Isc)) , 2);
+			
+			//Short circuit calculations
+			Req = (Psc)/pow(Isc, 2);
+			Zeq = (Vsc)/(Isc);
+			Xeq = sqrt(pow(Zeq, 2) - pow(Req, 2));
+			
+			cout << endl << "a) The equivalent circuit of this transformer referred to the high voltage side is:" << endl << endl;
+			cout << "Req = " << Req << " ohm" << endl;
+			cout << "Xeq = " << Xeq << " ohm" << endl;
+			cout << "Rc  = " << Rc << " ohm" << endl;
+			cout << "Xm  = " << Xm << " ohm" << endl << endl;
+			
+			/*****************************************/
+			
+			//Equivalent circuit to low voltage side calculations
+			Req = Req * pow((secondary)/(primary), 2);
+			Xeq = Xeq * pow((secondary)/(primary), 2);
+			Rc = Rc * pow((secondary)/(primary), 2);
+			Xm = Xm * pow((secondary)/(primary), 2);
+			
+			cout << "b) The equivalent circuit of this transformer referred to the low voltage side is:" << endl << endl;
+			cout << "Req = " << Req << " ohm" << endl;
+			cout << "Xeq = " << Xeq << " ohm" << endl;
+			cout << "Rc  = " << Rc << " ohm" << endl;
+			cout << "Xm  = " << Xm << " ohm" << endl << endl;
+			
+			/*****************************************/
+			
+			cout << "c) The voltage regulation when the transformer delivers rated load at 0.8 lagging power, 1.0 power factor, and 0.8 leading power factor at rated voltage:" << endl << endl;
+			
+			// Voltage regulation 0.8 lagging pf
+			pf = -acos(0.8);
+			S = float(KVA*1000)/float(secondary);
+			Z = complex<double>(Req, Xeq);
+			I2 = polar (S , pf);
+			V2 = complex<double> (secondary, 0);
+			V1prime = V2 + (I2*Z);
+			Reg = (float(abs(V1prime) - secondary) / float(secondary)) * 100;
+			
+			cout << "0.8 lagging p.f:" << endl << "%Reg = " << Reg << "%" << endl << endl;
+			
+			// Voltage regulation 1 pf
+			pf = acos(1);
+			S = float(KVA*1000)/float(secondary);
+			Z = complex<double>(Req, Xeq);
+			I2 = polar (S , pf);
+			V2 = complex<double> (secondary, 0);
+			V1prime = V2 + (I2*Z);
+			Reg = (float(abs(V1prime) - secondary) / float(secondary)) * 100;
+			
+			cout << "1 p.f:" << endl << "%Reg = " << Reg << "%" << endl << endl;
+			
+			// Voltage regulation 0.8 leading pf
+			pf = acos(0.8);
+			S = float(KVA*1000)/float(secondary);
+			Z = complex<double>(Req, Xeq);
+			I2 = polar (S , pf);
+			V2 = complex<double> (secondary, 0);
+			V1prime = V2 + (I2*Z);
+			Reg = (float(abs(V1prime) - secondary) / float(secondary)) * 100;
+			
+			cout << "0.8 leading p.f:" << endl << "%Reg = " << Reg << "%" << endl << endl;
+			
+			/*****************************************/
+			
+			cout << "d) The efficiency of the transformer at full load with a power factor of 0.8 lagging:" << endl << endl;
+			
+			Eff = (float(secondary*abs(I2)*0.8)/float((secondary*abs(I2)*0.8) + Poc + Pcu)) * 100;
+			
+			cout << "Efficiency = " << Eff << "%" << endl << endl;
+			
+		}
+		
+	}
+	
+	return 0;
+}
+
+void rectangular(float x, float y, float & mag, float & ang) {
+	
+	mag = x * cos(y*float(3.14159/180));
+	ang = x * sin(y*float(3.14159/180));
+	
+	return;
+}
+
+void polardeg(float x, float y, float & rdeg, float & thetadeg) {
+
+  rdeg = sqrt(pow(x,2)+pow(y,2));
+
+  if (rdeg > 0 &&  y > 0) {
+
+    thetadeg = acos(((x)/(rdeg)))*float(180/3.14159);
+
+  } else if (rdeg > 0 && y <= 0) {
+
+    thetadeg = -acos(((x)/(rdeg)))*float(180/3.14159);
+
+  } else {
+
+    thetadeg = 0;
+
+  }
+  return;
+}
